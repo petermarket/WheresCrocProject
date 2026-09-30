@@ -1,0 +1,21 @@
+# R and editor local state
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+Rplots.pdf
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.log
+# Local library and generated submission/results
+.Rlib/
+dist/
+results/
+# Credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
