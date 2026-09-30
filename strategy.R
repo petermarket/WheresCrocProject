@@ -1,12 +1,24 @@
-# Part 1: Game Strategy & Search Logic.
-# Consumes the probability map AFTER backpacker evidence has been applied.
-# Owns target selection and when to move/search, not pathfinding itself.
-# TODO: compare rushing to which.max(state) with searching likely sites en route.
-# TODO: use Part 3's shortestPath once implemented; plan exactly two actions.
-# Output searched lists actual searched sites, not move destinations alone.
-# The random move + search below is only a runnable scaffold.
 chooseMoves <- function(state, ranger, edges) {
-  options <- unique(c(ranger, getNeighbours(ranger, edges)))
-  destination <- options[sample.int(length(options), 1L)]
-  list(moves = c(destination, 0L), searched = destination)
+  # 1. Find the most likely waterhole for Croc
+  target <- which.max(state)
+  
+  # 2. Get the shortest path to the target (using Part 3's routing)
+  path <- shortestPath(ranger, target, edges)
+  
+  # 3. Plan exactly two actions based on distance
+  if (length(path) == 1) {
+    # Already there: search twice
+    moves <- c(0L, 0L)
+    searched <- c(ranger, ranger)
+  } else if (length(path) == 2) {
+    # One step away: move there, then search
+    moves <- c(path[2], 0L)
+    searched <- c(path[2])
+  } else {
+    # Two or more steps away: take two steps toward target
+    moves <- c(path[2], path[3])
+    searched <- integer(0)
+  }
+  
+  list(moves = moves, searched = searched)
 }
