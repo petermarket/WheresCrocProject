@@ -12,12 +12,43 @@ finished assignment solution.
 
 ## Files and responsibilities
 
-| File / branch | Owner | Responsibilities |
+The team is organized into the following three parts.
+
+| Part | Files / branch | Responsibilities |
 |---|---|---|
-| `hmm.R` / `hmm` | Member A | Transition model, forward algorithm, sensor and tourist evidence, probability normalization |
-| `strategy.R` / `strategy` | Member B | Shortest paths, target selection, and planning two actions per turn |
-| `myFunction.R`, `test.R`, `notes/results.md` / `integration-test` | Member C | State management, integration, testing, and experiment records |
-| `main` | Whole team | Shared version checked to run successfully |
+| 1. Game Strategy & Search Logic | `strategy.R` / `strategy` | Decide where to go and when to search using the probability map. Compare rushing to the most likely waterhole with searching high-probability sites along the route. |
+| 2. HMM Core Algorithm | `hmm.R` / `hmm` | Implement transition matrices and the forward algorithm using `dnorm` sensor likelihoods. Apply previous failed searches before predicting movement. |
+| 3. Routing & Edge Cases | `routing.R`, `myFunction.R` / `integration-test` | Implement shortest paths, handle backpacker deaths and surviving backpackers, manage `mem`, and integrate the controller. |
+| Shared testing | `test.R`, `notes/results.md` | Check module integration and record performance. Each member verifies their own part. |
+
+`integration-test` remains the branch name for Part 3 so existing clones continue
+to work. `packages/` contains the original course package; develop the solution
+in the R files at the repository root, without modifying the supplied archive.
+
+### Module contracts
+
+1. `prepareMemory(mem, n)` in `routing.R` resets per-game state and returns
+   `list(mem, newGame)`.
+2. `updateProbabilities(state, readings, edges, probs, searched, newGame)` in
+   `hmm.R` returns the sensor-updated probability vector. Previous failed searches
+   must be processed before the movement prediction.
+3. `applyBackpackerEvidence(state, positions)` in `routing.R` applies current
+   tourist observations. A newly eaten backpacker reveals Croc's exact location;
+   living backpackers exclude their locations; `NA` adds no evidence.
+4. `chooseMoves(state, ranger, edges)` in `strategy.R` returns two actions and
+   the sites searched, as `list(moves, searched)`.
+5. `myFunction` connects these steps, stores state and searches in `mem`, and
+   returns the updated `moveInfo`.
+
+Routing helpers are `getNeighbours(waterhole, edges)` and
+`shortestPath(start, target, edges)`. The latter must return the complete path,
+including both endpoints, or `integer(0)` if unreachable. Only the same-location
+case is implemented now; other calls deliberately raise a TODO error until
+Part 3 implements BFS. The current random strategy does not call this placeholder.
+
+Memory reset and backpacker evidence are implemented as basic integration
+helpers. HMM filtering, failed-search updates, general pathfinding, route caching,
+and probability-based strategy remain team TODOs.
 
 ## Setup and running
 
@@ -35,6 +66,7 @@ dir.create(".Rlib", showWarnings = FALSE)
 .libPaths(c(normalizePath(".Rlib"), .libPaths()))
 install.packages("packages/WheresCroc_1.2.2.tar.gz", repos = NULL,
                  type = "source", lib = ".Rlib")
+source("routing.R")
 source("hmm.R")
 source("strategy.R")
 source("myFunction.R")
@@ -91,7 +123,7 @@ course materials remains with the original authors.
 ```sh
 git clone https://github.com/petermarket/WheresCrocProject.git
 cd WheresCrocProject
-git switch strategy   # Member A: hmm; Member C: integration-test
+git switch strategy   # Part 2: hmm; Part 3: integration-test
 git pull --ff-only
 # Edit the files assigned to you.
 git add strategy.R
@@ -100,7 +132,7 @@ git push -u origin strategy
 ```
 
 Open a pull request to `main` on GitHub. Another team member reviews the changes,
-and Member C runs the tests before merging. To update a working branch, run
+and the Part 3 owner runs the integration tests before merging. To update a working branch, run
 `git fetch origin`, then `git merge origin/main`.
 
 Agree on module interface changes with the team before editing another member's
@@ -108,13 +140,13 @@ files. Branch protection has not been configured.
 
 ## Final single-file submission
 
-Keep the three implementation files separate during development, then combine
+Keep the four implementation files separate during development, then combine
 them into a standalone R script for submission. The submitted script must not
 depend on local `source()` paths. Run this from the repository root:
 
 ```r
 dir.create("dist", showWarnings = FALSE)
-files <- c("hmm.R", "strategy.R", "myFunction.R")
+files <- c("routing.R", "hmm.R", "strategy.R", "myFunction.R")
 writeLines(unlist(lapply(files, function(f) c(readLines(f), ""))),
            "dist/myFunction.R")
 ```

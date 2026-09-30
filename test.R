@@ -1,4 +1,5 @@
 # Run from the repository root: Rscript test.R [number-of-games] [seed]
+source("routing.R")
 source("hmm.R")
 source("strategy.R")
 source("myFunction.R")
