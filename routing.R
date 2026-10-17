@@ -5,12 +5,27 @@ getNeighbours <- function(waterhole, edges) {
            edges[edges[, 2] == waterhole, 1]))
 }
 
-# Contract: return the full path including start and target.
-# For start == target return start; for an unreachable target return integer(0).
-# This scaffold deliberately leaves BFS and route caching to Part 3.
+# Stop BFS when the target is discovered; only reconstruct the requested path.
 shortestPath <- function(start, target, edges) {
-  if (start == target) return(as.integer(start))
-  stop("TODO (Part 3): implement shortestPath using BFS before using it in strategy.")
+  parent <- rep(NA_integer_, max(c(start, target, edges)))
+  parent[start] <- start
+  queue <- start
+  head <- 1L
+  while (head <= length(queue) && is.na(parent[target])) {
+    current <- queue[head]
+    head <- head + 1L
+    for (nextHole in getNeighbours(current, edges)) {
+      if (is.na(parent[nextHole])) {
+        parent[nextHole] <- current
+        queue <- c(queue, nextHole)
+        if (nextHole == target) break
+      }
+    }
+  }
+  if (is.na(parent[target])) return(integer(0))
+  path <- as.integer(target)
+  while (path[1] != start) path <- c(parent[path[1]], path)
+  path
 }
 
 prepareMemory <- function(mem, n) {
@@ -19,8 +34,6 @@ prepareMemory <- function(mem, n) {
     mem$state <- rep(1 / n, n)
     mem$searched <- integer(0)
   }
-  # TODO: cache routes and the Part 2 transition matrix across games.
-  # Do not cache sensor distributions: probs changes between games.
   list(mem = mem, newGame = newGame)
 }
 
